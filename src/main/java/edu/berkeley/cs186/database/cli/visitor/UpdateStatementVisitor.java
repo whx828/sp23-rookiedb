@@ -51,10 +51,10 @@ public class UpdateStatementVisitor extends StatementVisitor {
             exprFunc.setSchema(schema);
             condFunc.setSchema(schema);
             transaction.update(
-                    this.tableName,
-                    this.updateColumnName,
-                    exprFunc::evaluate,
-                    condFunc::evaluate
+                this.tableName,
+                this.updateColumnName,
+                exprFunc::evaluate,
+                condFunc::evaluate
             );
             out.println("UPDATE");
         } catch (Exception e) {

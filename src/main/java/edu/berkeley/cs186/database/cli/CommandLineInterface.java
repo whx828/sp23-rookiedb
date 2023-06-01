@@ -9,8 +9,6 @@ import edu.berkeley.cs186.database.cli.parser.ParseException;
 import edu.berkeley.cs186.database.cli.parser.RookieParser;
 import edu.berkeley.cs186.database.cli.parser.TokenMgrError;
 import edu.berkeley.cs186.database.cli.visitor.StatementListVisitor;
-import edu.berkeley.cs186.database.concurrency.LockManager;
-import edu.berkeley.cs186.database.memory.ClockEvictionPolicy;
 import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.Schema;
 import edu.berkeley.cs186.database.table.Table;
@@ -25,30 +23,25 @@ import java.util.concurrent.TimeUnit;
 
 public class CommandLineInterface {
     private static final String MASCOT = "\n\\|/  ___------___\n \\__|--%s______%s--|\n    |  %-9s |\n     ---______---\n";
-    private static final int[] VERSION = { 1, 8, 6 }; // {major, minor, build}
+    private static final int[] VERSION = {1, 8, 6}; // {major, minor, build}
     private static final String LABEL = "sp23";
-
+    private static String[] institution = {
+        "berkeley", "berkley", "berklee", "Brocolli", "BeRKeLEy", "UC Zoom",
+        "   UCB  ", "go bears", "   #1  "
+    };
+    private static List<String> startupMessages = Arrays
+        .asList("Speaking with the buffer manager", "Saying grace hash",
+            "Parallelling parking spaces", "Bulk loading exam preparations",
+            "Declaring functional independence", "Maintaining long distance entity-relationships");
+    private static List<String> startupProblems = Arrays
+        .asList("Rebuilding air quality index", "Extinguishing B+ forest fires",
+            "Recovering from PG&E outages", "Disinfecting user inputs", "Shellsorting in-place",
+            "Distributing face masks", "Joining Zoom meetings", "Caching out of the stock market",
+            "Advising transactions to self-isolate", "Tweaking the quarantine optimizer");
     private InputStream in;
     private PrintStream out; // Use instead of System.out to work across a network
     private Database db;
     private Random generator;
-
-    public static void main(String args[]) throws IOException {
-        // Basic database for project 0 through 3
-        Database db = new Database("demo", 25);
-        
-        // Use the following after completing project 4 (locking)
-        // Database db = new Database("demo", 25, new LockManager());
-        
-        // Use the following after completing project 5 (recovery)
-        // Database db = new Database("demo", 25, new LockManager(), new ClockEvictionPolicy(), true);
-
-        db.loadDemo();
-
-        CommandLineInterface cli = new CommandLineInterface(db);
-        cli.run();
-        db.close();
-    }
 
     public CommandLineInterface(Database db) {
         // By default, just use standard in and out
@@ -60,6 +53,23 @@ public class CommandLineInterface {
         this.in = in;
         this.out = out;
         this.generator = new Random();
+    }
+
+    public static void main(String args[]) throws IOException {
+        // Basic database for project 0 through 3
+        Database db = new Database("demo", 25);
+
+        // Use the following after completing project 4 (locking)
+        // Database db = new Database("demo", 25, new LockManager());
+
+        // Use the following after completing project 5 (recovery)
+        // Database db = new Database("demo", 25, new LockManager(), new ClockEvictionPolicy(), true);
+
+        db.loadDemo();
+
+        CommandLineInterface cli = new CommandLineInterface(db);
+        cli.run();
+        db.close();
     }
 
     public void run() {
@@ -131,7 +141,7 @@ public class CommandLineInterface {
                     return "";
                 } else if (trimmed.startsWith("\\")) {
                     return trimmed.replaceAll("", "");
-                } else if (trimmed.toLowerCase().equals("exit")) {
+                } else if (trimmed.equalsIgnoreCase("exit")) {
                     return "exit";
                 }
             }
@@ -174,7 +184,7 @@ public class CommandLineInterface {
             if (tokens.length == 1) {
                 List<Record> records = db.scanTableMetadataRecords();
                 new PrettyPrinter(out).printRecords(db.getTableInfoSchema().getFieldNames(),
-                        records.iterator());
+                    records.iterator());
             } else if (tokens.length == 2) {
                 String tableName = tokens[1];
                 if (tc == null) {
@@ -188,7 +198,7 @@ public class CommandLineInterface {
         } else if (cmd.equals("di")) {
             List<Record> records = db.scanIndexMetadataRecords();
             new PrettyPrinter(out).printRecords(db.getIndexInfoSchema().getFieldNames(),
-                    records.iterator());
+                records.iterator());
         } else if (cmd.equals("locks")) {
             if (tc == null) {
                 this.out.println("No locks held, because not currently in a transaction.");
@@ -202,22 +212,6 @@ public class CommandLineInterface {
             ));
         }
     }
-
-    private static String[] institution = {
-            "berkeley", "berkley", "berklee", "Brocolli", "BeRKeLEy", "UC Zoom",
-            "   UCB  ", "go bears", "   #1  "
-    };
-
-    private static List<String> startupMessages = Arrays
-            .asList("Speaking with the buffer manager", "Saying grace hash",
-                    "Parallelizing parking spaces", "Bulk loading exam preparations",
-                    "Declaring functional independence", "Maintaining long distance entity-relationships" );
-
-    private static List<String> startupProblems = Arrays
-            .asList("Rebuilding air quality index", "Extinguishing B+ forest fires",
-                    "Recovering from PG&E outages", "Disinfecting user inputs", "Shellsorting in-place",
-                    "Distributing face masks", "Joining Zoom meetings", "Caching out of the stock market",
-                    "Advising transactions to self-isolate", "Tweaking the quarantine optimizer");
 
     private void startup() {
         Collections.shuffle(startupMessages);

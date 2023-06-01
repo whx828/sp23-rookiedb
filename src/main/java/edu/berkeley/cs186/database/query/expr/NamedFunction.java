@@ -108,8 +108,8 @@ abstract class NamedFunction extends Expression {
             Expression f2 = this.children.get(1);
             Expression f3 = this.children.get(1);
             if (f1.getType().getTypeId() != TypeId.STRING ||
-                    f2.getType().getTypeId() != TypeId.STRING ||
-                    f3.getType().getTypeId() != TypeId.STRING) {
+                f2.getType().getTypeId() != TypeId.STRING ||
+                f3.getType().getTypeId() != TypeId.STRING) {
                 throw new UnsupportedOperationException("All arguments of REPLACE must be of type STRING");
             }
             return f1.getType();
@@ -237,10 +237,14 @@ abstract class NamedFunction extends Expression {
         public DataBox evaluate(Record record) {
             DataBox d = this.children.get(0).evaluate(record);
             switch (this.getType().getTypeId()) {
-                case INT: return new IntDataBox(-toInt(d));
-                case LONG: return new LongDataBox(-toInt(d));
-                case FLOAT: return new FloatDataBox(-toFloat(d));
-                default: throw new RuntimeException("Unreachable code.");
+                case INT:
+                    return new IntDataBox(-toInt(d));
+                case LONG:
+                    return new LongDataBox(-toInt(d));
+                case FLOAT:
+                    return new FloatDataBox(-toFloat(d));
+                default:
+                    throw new RuntimeException("Unreachable code.");
             }
         }
     }

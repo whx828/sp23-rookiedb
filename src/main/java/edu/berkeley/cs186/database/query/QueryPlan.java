@@ -48,7 +48,7 @@ public class QueryPlan {
      * Creates a new QueryPlan within `transaction` with base table
      * `baseTableName`
      *
-     * @param transaction the transaction containing this query
+     * @param transaction   the transaction containing this query
      * @param baseTableName the source table for this query
      */
     public QueryPlan(TransactionContext transaction, String baseTableName) {
@@ -59,8 +59,8 @@ public class QueryPlan {
      * Creates a new QueryPlan within transaction and base table startTableName
      * aliased as aliasTableName.
      *
-     * @param transaction the transaction containing this query
-     * @param baseTableName the source table for this query
+     * @param transaction    the transaction containing this query
+     * @param baseTableName  the source table for this query
      * @param aliasTableName the alias for the source table
      */
     public QueryPlan(TransactionContext transaction, String baseTableName,
@@ -99,17 +99,17 @@ public class QueryPlan {
      *               the table of.
      * @return the table the column belongs to
      * @throws IllegalArgumentException if the column name is ambiguous (it belongs
-     * to two or more tables in this.tableNames) or if its completely unknown
-     * (it didn't belong to any of the tables in this.tableNames)
+     *                                  to two or more tables in this.tableNames) or if its completely unknown
+     *                                  (it didn't belong to any of the tables in this.tableNames)
      */
     private String resolveColumn(String column) {
         String result = null;
-        for (String tableName: this.tableNames) {
+        for (String tableName : this.tableNames) {
             Schema s = transaction.getSchema(tableName);
-            for (String fieldName: s.getFieldNames()) {
+            for (String fieldName : s.getFieldNames()) {
                 if (fieldName.equals(column)) {
                     if (result != null) throw new RuntimeException(
-                            "Ambiguous column name `" + column + " found in both `" +
+                        "Ambiguous column name `" + column + " found in both `" +
                             result + "` and `" + tableName + "`.");
                     result = tableName;
                 }
@@ -117,7 +117,7 @@ public class QueryPlan {
         }
         if (result == null)
             throw new IllegalArgumentException("Unknown column `" + column + "`");
-        return  result;
+        return result;
     }
 
     @Override
@@ -138,13 +138,13 @@ public class QueryPlan {
             result.append(String.format("\nFROM %s\n", baseTable));
         else result.append(String.format("\nFROM %s AS %s\n", baseTable, alias));
         // INNER JOIN clauses
-        for (JoinPredicate predicate: this.joinPredicates)
+        for (JoinPredicate predicate : this.joinPredicates)
             result.append(String.format("    %s\n", predicate));
         // WHERE clause
         if (selectPredicates.size() > 0) {
             result.append("WHERE\n");
             List<String> predicates = new ArrayList<>();
-            for (SelectPredicate predicate: this.selectPredicates) {
+            for (SelectPredicate predicate : this.selectPredicates) {
                 predicates.add(predicate.toString());
             }
             result.append("   ").append(String.join(" AND\n   ", predicates));
@@ -163,88 +163,13 @@ public class QueryPlan {
     // Helper Classes //////////////////////////////////////////////////////////
 
     /**
-     * Represents a single selection predicate. Some examples:
-     *   table1.col = 186
-     *   table2.col <= 123
-     *   table3.col > 6
-     */
-    private class SelectPredicate {
-        String tableName;
-        String column;
-        PredicateOperator operator;
-        DataBox value;
-
-        SelectPredicate(String column, PredicateOperator operator, DataBox value) {
-            if (column.contains(".")) {
-                this.tableName = column.split("\\.")[0];
-                column = column.split("\\.")[1];
-            }  else this.tableName = resolveColumn(column);
-            this.column = column;
-            this.operator = operator;
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("%s.%s %s %s", tableName, column, operator.toSymbol(), value);
-        }
-    }
-
-    /**
-     * Represents an equijoin in the query plan. Some examples:
-     *   INNER JOIN rightTable ON leftTable.leftColumn = rightTable.rightColumn
-     *   INNER JOIN table2 ON table2.some_id = table1.some_id
-     */
-    private class JoinPredicate {
-        String leftTable;
-        String leftColumn;
-        String rightTable;
-        String rightColumn;
-        private String joinTable; // Just for formatting purposes
-
-        JoinPredicate(String tableName, String leftColumn, String rightColumn) {
-            if (!leftColumn.contains(".") || !rightColumn.contains(".")) {
-                throw new IllegalArgumentException("Join columns must be fully qualified");
-            }
-
-            // The splitting logic below just separates the column name from the
-            // table name.
-            this.joinTable = tableName;
-            this.leftTable = leftColumn.split("\\.")[0];
-            this.leftColumn = leftColumn;
-            this.rightTable = rightColumn.split("\\.")[0];
-            this.rightColumn = rightColumn;
-            if (!tableName.equals(rightTable) && !tableName.equals(leftTable)) {
-                throw new IllegalArgumentException(String.format(
-                    "`%s` is invalid. ON clause of INNER JOIN must contain the " +
-                            "new table being joined.",
-                    this.toString()
-                ));
-            }
-        }
-
-        @Override
-        public String toString() {
-            String unAliased = aliases.get(joinTable);
-            if (unAliased.equals(joinTable)) {
-                return String.format("INNER JOIN %s ON %s = %s",
-                    this.joinTable, this.leftColumn, this.rightColumn);
-            }
-            return String.format("INNER JOIN %s AS %s ON %s = %s",
-                unAliased, this.joinTable, this.leftColumn, this.rightColumn);
-        }
-    }
-
-    // Project /////////////////////////////////////////////////////////////////
-
-    /**
      * Add a project operator to the QueryPlan with the given column names.
      *
      * @param columnNames the columns to project
      * @throws RuntimeException a set of projections have already been
-     * specified.
+     *                          specified.
      */
-    public void project(String...columnNames) {
+    public void project(String... columnNames) {
         project(Arrays.asList(columnNames));
     }
 
@@ -254,12 +179,12 @@ public class QueryPlan {
      *
      * @param columnNames the columns to project
      * @throws RuntimeException a set of projections have already been
-     * specified.
+     *                          specified.
      */
     public void project(List<String> columnNames) {
         if (!this.projectColumns.isEmpty()) {
             throw new RuntimeException(
-                    "Cannot add more than one project operator to this query."
+                "Cannot add more than one project operator to this query."
             );
         }
         if (columnNames.isEmpty()) {
@@ -267,6 +192,8 @@ public class QueryPlan {
         }
         this.projectColumns = new ArrayList<>(columnNames);
     }
+
+    // Project /////////////////////////////////////////////////////////////////
 
     public void project(List<String> names, List<Expression> functions) {
         this.projectColumns = names;
@@ -280,26 +207,25 @@ public class QueryPlan {
     private void addProject() {
         if (!this.projectColumns.isEmpty()) {
             if (this.finalOperator == null) throw new RuntimeException(
-                    "Can't add Project onto null finalOperator."
+                "Can't add Project onto null finalOperator."
             );
             if (this.projectFunctions == null) {
                 this.finalOperator = new ProjectOperator(
-                        this.finalOperator,
-                        this.projectColumns,
-                        this.groupByColumns
+                    this.finalOperator,
+                    this.projectColumns,
+                    this.groupByColumns
                 );
             } else {
                 this.finalOperator = new ProjectOperator(
-                        this.finalOperator,
-                        this.projectColumns,
-                        this.projectFunctions,
-                        this.groupByColumns
+                    this.finalOperator,
+                    this.projectColumns,
+                    this.projectFunctions,
+                    this.groupByColumns
                 );
             }
         }
     }
 
-    // Sort ////////////////////////////////////////////////////////////////////
     /**
      * Add a sort operator to the query plan on the given column.
      */
@@ -318,16 +244,17 @@ public class QueryPlan {
             return; // already sorted
         }
         this.finalOperator = new SortOperator(
-                this.transaction,
-                this.finalOperator,
-                this.sortColumn
+            this.transaction,
+            this.finalOperator,
+            this.sortColumn
         );
     }
 
-    // Limit ///////////////////////////////////////////////////////////////////
+    // Sort ////////////////////////////////////////////////////////////////////
 
     /**
      * Add a limit with no offset
+     *
      * @param limit an upper bound on the number of records to be yielded
      */
     public void limit(int limit) {
@@ -336,13 +263,16 @@ public class QueryPlan {
 
     /**
      * Add a limit with an offset
-     * @param limit an upper bound on the number of records to be yielded
+     *
+     * @param limit  an upper bound on the number of records to be yielded
      * @param offset discards this many records before yielding the first one
      */
     public void limit(int limit, int offset) {
         this.limit = limit;
         this.offset = offset;
     }
+
+    // Limit ///////////////////////////////////////////////////////////////////
 
     /**
      * Sets the final operator to a limit operator with the original final
@@ -351,21 +281,19 @@ public class QueryPlan {
     private void addLimit() {
         if (this.limit >= 0) {
             this.finalOperator = new LimitOperator(
-                    this.finalOperator,
-                    this.limit, this.offset
+                this.finalOperator,
+                this.limit, this.offset
             );
         }
     }
-
-    // Select //////////////////////////////////////////////////////////////////
 
     /**
      * Add a select operator. Only returns columns in which the column fulfills
      * the predicate relative to value.
      *
-     * @param column the column to specify the predicate on
+     * @param column   the column to specify the predicate on
      * @param operator the operator of the predicate (=, <, <=, >, >=, !=)
-     * @param value the value to compare against
+     * @param value    the value to compare against
      */
     public void select(String column, PredicateOperator operator,
                        Object value) {
@@ -382,22 +310,22 @@ public class QueryPlan {
         for (int i = 0; i < selectPredicates.size(); i++) {
             SelectPredicate predicate = selectPredicates.get(i);
             this.finalOperator = new SelectOperator(
-                    this.finalOperator,
-                    predicate.tableName + "." + predicate.column,
-                    predicate.operator,
-                    predicate.value
+                this.finalOperator,
+                predicate.tableName + "." + predicate.column,
+                predicate.operator,
+                predicate.value
             );
         }
     }
 
-    // Group By ////////////////////////////////////////////////////////////////
+    // Select //////////////////////////////////////////////////////////////////
 
     /**
      * Set the group by columns for this query.
      *
      * @param columns the columns to group by
      */
-    public void groupBy(String...columns) {
+    public void groupBy(String... columns) {
         this.groupByColumns = Arrays.asList(columns);
     }
 
@@ -410,6 +338,8 @@ public class QueryPlan {
         this.groupByColumns = columns;
     }
 
+    // Group By ////////////////////////////////////////////////////////////////
+
     /**
      * Sets the final operator to a GroupByOperator with the original final
      * operator as its source. Does nothing there are no group by columns.
@@ -417,24 +347,22 @@ public class QueryPlan {
     private void addGroupBy() {
         if (this.groupByColumns.size() > 0) {
             if (this.finalOperator == null) throw new RuntimeException(
-                    "Can't add GroupBy onto null finalOperator."
+                "Can't add GroupBy onto null finalOperator."
             );
             this.finalOperator = new GroupByOperator(
-                    this.finalOperator,
-                    this.transaction,
-                    this.groupByColumns
+                this.finalOperator,
+                this.transaction,
+                this.groupByColumns
             );
         }
     }
-
-    // Join ////////////////////////////////////////////////////////////////////
 
     /**
      * Join the leftColumnName column of the existing query plan against the
      * rightColumnName column of tableName.
      *
-     * @param tableName the table to join against
-     * @param leftColumnName the join column in the existing QueryPlan
+     * @param tableName       the table to join against
+     * @param leftColumnName  the join column in the existing QueryPlan
      * @param rightColumnName the join column in tableName
      */
     public void join(String tableName, String leftColumnName, String rightColumnName) {
@@ -445,9 +373,9 @@ public class QueryPlan {
      * Join the leftColumnName column of the existing queryplan against the
      * rightColumnName column of tableName, aliased as aliasTableName.
      *
-     * @param tableName the table to join against
-     * @param aliasTableName alias of table to join against
-     * @param leftColumnName the join column in the existing QueryPlan
+     * @param tableName       the table to join against
+     * @param aliasTableName  alias of table to join against
+     * @param leftColumnName  the join column in the existing QueryPlan
      * @param rightColumnName the join column in tableName
      */
     public void join(String tableName, String aliasTableName, String leftColumnName,
@@ -460,13 +388,15 @@ public class QueryPlan {
         }
         this.aliases.put(aliasTableName, tableName);
         this.joinPredicates.add(new JoinPredicate(
-                aliasTableName,
-                leftColumnName,
-                rightColumnName
+            aliasTableName,
+            leftColumnName,
+            rightColumnName
         ));
         this.tableNames.add(aliasTableName);
         this.transaction.setAliasMap(this.aliases);
     }
+
+    // Join ////////////////////////////////////////////////////////////////////
 
     /**
      * For each table in this.joinTableNames
@@ -478,14 +408,14 @@ public class QueryPlan {
         int pos = 1;
         for (JoinPredicate predicate : joinPredicates) {
             this.finalOperator = new SNLJOperator(
-                    finalOperator,
-                    new SequentialScanOperator(
-                            this.transaction,
-                            tableNames.get(pos)
-                    ),
-                    predicate.leftColumn,
-                    predicate.rightColumn,
-                    this.transaction
+                finalOperator,
+                new SequentialScanOperator(
+                    this.transaction,
+                    tableNames.get(pos)
+                ),
+                predicate.leftColumn,
+                predicate.rightColumn,
+                this.transaction
             );
             pos++;
         }
@@ -496,15 +426,13 @@ public class QueryPlan {
             throw new UnsupportedOperationException("Duplicate alias " + alias);
         }
         cteAliases.put(alias, tableName);
-        for (String k: aliases.keySet()) {
+        for (String k : aliases.keySet()) {
             if (aliases.get(k).toLowerCase().equals(alias.toLowerCase())) {
                 aliases.put(k, tableName);
             }
         }
         this.transaction.setAliasMap(this.aliases);
     }
-
-    // Task 5: Single Table Access Selection ///////////////////////////////////
 
     /**
      * Gets all select predicates for which there exists an index on the column
@@ -547,7 +475,7 @@ public class QueryPlan {
             try {
                 String colName = source.getSchema().matchFieldName(curr.tableName + "." + curr.column);
                 source = new SelectOperator(
-                        source, colName, curr.operator, curr.value
+                    source, colName, curr.operator, curr.value
                 );
             } catch (RuntimeException err) {
                 /* do nothing */
@@ -556,13 +484,15 @@ public class QueryPlan {
         return source;
     }
 
+    // Task 5: Single Table Access Selection ///////////////////////////////////
+
     /**
      * Finds the lowest cost QueryOperator that accesses the given table. First
      * determine the cost of a sequential scan for the given table. Then for
      * every index that can be used on that table, determine the cost of an
      * index scan. Keep track of the minimum cost operation and push down
      * eligible select predicates.
-     *
+     * <p>
      * If an index scan was chosen, exclude the redundant select predicate when
      * pushing down selects. This method will be called during the first pass of
      * the search algorithm to determine the most efficient way to access each
@@ -580,13 +510,11 @@ public class QueryPlan {
         return minOp;
     }
 
-    // Task 6: Join Selection //////////////////////////////////////////////////
-
     /**
      * Given a join predicate between left and right operators, finds the lowest
      * cost join operator out of join types in JoinOperator.JoinType. By default
      * only considers SNLJ and BNLJ to prevent dependencies on GHJ, Sort and SMJ.
-     *
+     * <p>
      * Reminder: Your implementation does not need to consider cartesian products
      * and does not need to keep track of interesting orders.
      *
@@ -616,7 +544,7 @@ public class QueryPlan {
      * each table set, check each join predicate to see if there is a valid join
      * with a new table. If so, find the minimum cost join. Return a map from
      * each set of table names being joined to its lowest cost join operator.
-     *
+     * <p>
      * Join predicates are stored as elements of `this.joinPredicates`.
      *
      * @param prevMap  maps a set of tables to a query operator over the set of
@@ -627,8 +555,8 @@ public class QueryPlan {
      * elements in each set of table names should be equal to the pass number.
      */
     public Map<Set<String>, QueryOperator> minCostJoins(
-            Map<Set<String>, QueryOperator> prevMap,
-            Map<Set<String>, QueryOperator> pass1Map) {
+        Map<Set<String>, QueryOperator> prevMap,
+        Map<Set<String>, QueryOperator> pass1Map) {
         Map<Set<String>, QueryOperator> result = new HashMap<>();
         // TODO(proj3_part2): implement
         // We provide a basic description of the logic you have to implement:
@@ -649,7 +577,7 @@ public class QueryPlan {
         return result;
     }
 
-    // Task 7: Optimal Plan Selection //////////////////////////////////////////
+    // Task 6: Join Selection //////////////////////////////////////////////////
 
     /**
      * Finds the lowest cost QueryOperator in the given mapping. A mapping is
@@ -660,7 +588,7 @@ public class QueryPlan {
      */
     private QueryOperator minCostOperator(Map<Set<String>, QueryOperator> map) {
         if (map.size() == 0) throw new IllegalArgumentException(
-                "Can't find min cost operator over empty map"
+            "Can't find min cost operator over empty map"
         );
         QueryOperator minOp = null;
         int minCost = Integer.MAX_VALUE;
@@ -698,15 +626,12 @@ public class QueryPlan {
         return this.executeNaive(); // TODO(proj3_part2): Replace this!
     }
 
-    // EXECUTE NAIVE ///////////////////////////////////////////////////////////
-    // The following functions are used to generate a naive query plan. You're
-    // free to look to them for guidance, but you shouldn't need to use any of
-    // these methods when you implement your own execute function.
+    // Task 7: Optimal Plan Selection //////////////////////////////////////////
 
     /**
      * Given a simple query over a single table without any joins, such as:
-     *      SELECT * FROM table WHERE table.column >= 186;
-     *
+     * SELECT * FROM table WHERE table.column >= 186;
+     * <p>
      * We can take advantage of an index over table.column to perform a over
      * only values that meet the predicate. This function determines whether or
      * not there are any columns that we can perform this optimization with.
@@ -725,7 +650,7 @@ public class QueryPlan {
             // the index of the eligible predicate
             SelectPredicate predicate = selectPredicates.get(i);
             boolean hasIndex = this.transaction.indexExists(
-                    this.tableNames.get(0), predicate.column
+                this.tableNames.get(0), predicate.column
             );
             if (hasIndex && predicate.operator != PredicateOperator.NOT_EQUALS) {
                 return i;
@@ -744,15 +669,20 @@ public class QueryPlan {
     private void generateIndexPlanNaive(int indexPredicate) {
         SelectPredicate predicate = this.selectPredicates.get(indexPredicate);
         this.finalOperator = new IndexScanOperator(
-                this.transaction, this.tableNames.get(0),
-                predicate.column,
-                predicate.operator,
-                predicate.value
+            this.transaction, this.tableNames.get(0),
+            predicate.column,
+            predicate.operator,
+            predicate.value
         );
         this.selectPredicates.remove(indexPredicate);
         this.addSelectsNaive();
         this.addProject();
     }
+
+    // EXECUTE NAIVE ///////////////////////////////////////////////////////////
+    // The following functions are used to generate a naive query plan. You're
+    // free to look to them for guidance, but you shouldn't need to use any of
+    // these methods when you implement your own execute function.
 
     /**
      * Generates a naive QueryPlan in which all joins are at the bottom of the
@@ -770,8 +700,8 @@ public class QueryPlan {
         } else {
             // start off with a scan on the first table
             this.finalOperator = new SequentialScanOperator(
-                    this.transaction,
-                    this.tableNames.get(0)
+                this.transaction,
+                this.tableNames.get(0)
             );
 
             // add joins, selects, group by's and projects to our plan
@@ -783,6 +713,79 @@ public class QueryPlan {
             this.addLimit();
         }
         return this.finalOperator.iterator();
+    }
+
+    /**
+     * Represents a single selection predicate. Some examples:
+     * table1.col = 186
+     * table2.col <= 123
+     * table3.col > 6
+     */
+    private class SelectPredicate {
+        String tableName;
+        String column;
+        PredicateOperator operator;
+        DataBox value;
+
+        SelectPredicate(String column, PredicateOperator operator, DataBox value) {
+            if (column.contains(".")) {
+                this.tableName = column.split("\\.")[0];
+                column = column.split("\\.")[1];
+            } else this.tableName = resolveColumn(column);
+            this.column = column;
+            this.operator = operator;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s.%s %s %s", tableName, column, operator.toSymbol(), value);
+        }
+    }
+
+    /**
+     * Represents an equijoin in the query plan. Some examples:
+     * INNER JOIN rightTable ON leftTable.leftColumn = rightTable.rightColumn
+     * INNER JOIN table2 ON table2.some_id = table1.some_id
+     */
+    private class JoinPredicate {
+        String leftTable;
+        String leftColumn;
+        String rightTable;
+        String rightColumn;
+        private String joinTable; // Just for formatting purposes
+
+        JoinPredicate(String tableName, String leftColumn, String rightColumn) {
+            if (!leftColumn.contains(".") || !rightColumn.contains(".")) {
+                throw new IllegalArgumentException("Join columns must be fully qualified");
+            }
+
+            // The splitting logic below just separates the column name from the
+            // table name.
+            this.joinTable = tableName;
+            this.leftTable = leftColumn.split("\\.")[0];
+            this.leftColumn = leftColumn;
+            this.rightTable = rightColumn.split("\\.")[0];
+            this.rightColumn = rightColumn;
+            if (!tableName.equals(rightTable) && !tableName.equals(leftTable)) {
+                throw new IllegalArgumentException(String.format(
+                    "`%s` is invalid. ON clause of INNER JOIN must contain the " +
+                        "new table being joined.",
+                    this.toString()
+                ));
+            }
+        }
+
+        @Override
+        public String toString() {
+            String unAliased = aliases.get(joinTable);
+            if (unAliased.equals(joinTable)) {
+                return String.format("INNER JOIN %s ON %s = %s",
+                    this.joinTable, this.leftColumn, this.rightColumn);
+            }
+            return String.format("INNER JOIN %s AS %s ON %s = %s",
+                unAliased, this.joinTable, this.leftColumn, this.rightColumn);
+        }
     }
 
 }
