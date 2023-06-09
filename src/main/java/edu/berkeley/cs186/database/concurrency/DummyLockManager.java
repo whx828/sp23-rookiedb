@@ -62,4 +62,3 @@ public class DummyLockManager extends LockManager {
         return Collections.emptyList();
     }
 }
-

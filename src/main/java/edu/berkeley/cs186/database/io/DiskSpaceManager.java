@@ -106,5 +106,4 @@ public interface DiskSpaceManager extends AutoCloseable {
      * @return true if the page is allocated, false otherwise
      */
     boolean pageAllocated(long page);
-
 }

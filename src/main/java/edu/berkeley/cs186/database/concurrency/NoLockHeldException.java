@@ -6,4 +6,3 @@ public class NoLockHeldException extends RuntimeException {
         super(message);
     }
 }
-

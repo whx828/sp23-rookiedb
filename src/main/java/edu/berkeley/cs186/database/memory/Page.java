@@ -91,7 +91,7 @@ public class Page {
     /**
      * Write num bytes from buf at offset position.
      *
-     * @param position the offest in the file to write to
+     * @param position the offset in the file to write to
      * @param num      the number of bytes to write
      * @param buf      the source for the write
      */

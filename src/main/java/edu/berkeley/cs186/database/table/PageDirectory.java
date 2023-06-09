@@ -107,7 +107,7 @@ public class PageDirectory implements BacktrackingIterable<Page> {
 
     public Page getPageWithSpace(short requiredSpace) {
         if (requiredSpace <= 0) {
-            throw new IllegalArgumentException("cannot request nonpositive amount of space");
+            throw new IllegalArgumentException("cannot request non-positive amount of space");
         }
         if (requiredSpace > EFFECTIVE_PAGE_SIZE - emptyPageMetadataSize) {
             throw new IllegalArgumentException("requesting page with more space than the size of the page");
@@ -304,6 +304,7 @@ public class PageDirectory implements BacktrackingIterable<Page> {
             this.page.pin();
             try {
                 this.nextPage = new HeaderPage(page.getPageNum(), headerOffset + 1, false);
+                // Why position is 1? It should be 5 bytes after the header.
                 this.page.getBuffer().position(1).putLong(page.getPageNum());
             } finally {
                 this.page.unpin();

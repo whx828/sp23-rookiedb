@@ -6,4 +6,3 @@ public class InvalidLockException extends RuntimeException {
         super(message);
     }
 }
-

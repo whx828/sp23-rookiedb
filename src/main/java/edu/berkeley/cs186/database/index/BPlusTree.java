@@ -9,8 +9,10 @@ import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.io.DiskSpaceManager;
 import edu.berkeley.cs186.database.memory.BufferManager;
+import edu.berkeley.cs186.database.memory.Page;
 import edu.berkeley.cs186.database.table.RecordId;
 
+import javax.swing.text.AbstractDocument;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -34,7 +36,7 @@ import java.util.*;
  * <p>
  * // Iterate over the record ids in the tree.
  * tree.scanEqual(new IntDataBox(2));        // [(2, 2)]
- * tree.scanAll();                             // [(0, 0), (1, 1), (2, 2)]
+ * tree.scanAll();                           // [(0, 0), (1, 1), (2, 2)]
  * tree.scanGreaterEqual(new IntDataBox(1)); // [(1, 1), (2, 2)]
  * <p>
  * // Remove some elements from the tree.
@@ -89,7 +91,7 @@ public class BPlusTree {
     public BPlusTree(BufferManager bufferManager, BPlusTreeMetadata metadata, LockContext lockContext) {
         // Prevent child locks - we only lock the entire tree as a whole.
         lockContext.disableChildLocks();
-        // By default we want to read the whole tree
+        // By default, we want to read the whole tree
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         // Sanity checks.
@@ -158,8 +160,8 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): implement
-
-        return Optional.empty();
+        LeafNode node = this.root.get(key);
+        return node.getKey(key);
     }
 
     /**
@@ -214,8 +216,7 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        return new BPlusTreeIterator();
     }
 
     /**
@@ -247,8 +248,8 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        LeafNode node = root.get(key);
+        return new BPlusTreeIterator(node, key);
     }
 
     /**
@@ -269,8 +270,23 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
+        Optional<Pair<DataBox, Long>> flowValue = root.put(key, rid);
+        if (flowValue.isPresent()) {
+            Pair<DataBox, Long> pair = flowValue.get();
 
-        return;
+            DataBox flowKey = pair.getFirst();
+            List<DataBox> newRootKeys = new ArrayList<>();
+            newRootKeys.add(flowKey);
+
+            Long flowChildPagNum = pair.getSecond();
+            List<Long> newRootChildren = new ArrayList<>();
+            Long oldRootPagNum = root.getPage().getPageNum();
+            newRootChildren.add(oldRootPagNum);
+            newRootChildren.add(flowChildPagNum);
+
+            InnerNode newRoot = new InnerNode(metadata, bufferManager, newRootKeys, newRootChildren, lockContext);
+            updateRoot(newRoot);
+        }
     }
 
     /**
@@ -300,8 +316,29 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
+        if (scanAll().hasNext()) {
+             throw new RuntimeException("buldLoad must be called in an empty tree");
+        }
 
-        return;
+        while (data.hasNext()) {
+            Optional<Pair<DataBox, Long>> flowValue = root.bulkLoad(data, fillFactor);
+            if (flowValue.isPresent()) {
+                Pair<DataBox, Long> pair = flowValue.get();
+
+                DataBox flowKey = pair.getFirst();
+                List<DataBox> newRootKeys = new ArrayList<>();
+                newRootKeys.add(flowKey);
+
+                Long flowChildPagNum = pair.getSecond();
+                List<Long> newRootChildren = new ArrayList<>();
+                Long oldRootPagNum = root.getPage().getPageNum();
+                newRootChildren.add(oldRootPagNum);
+                newRootChildren.add(flowChildPagNum);
+
+                InnerNode newRoot = new InnerNode(metadata, bufferManager, newRootKeys, newRootChildren, lockContext);
+                updateRoot(newRoot);
+            }
+        }
     }
 
     // Helpers /////////////////////////////////////////////////////////////////
@@ -323,8 +360,7 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): implement
-
-        return;
+        root.remove(key);
     }
 
     /**
@@ -428,17 +464,54 @@ public class BPlusTree {
     // Iterator ////////////////////////////////////////////////////////////////
     private class BPlusTreeIterator implements Iterator<RecordId> {
         // TODO(proj2): Add whatever fields and constructors you want here.
+        LeafNode node;
+        List<RecordId> Records;
+        int index;
+
+        public void exchange(Long pageNum) {
+            node = LeafNode.fromBytes(metadata, bufferManager, lockContext, pageNum);
+            index = 0;
+            Records = node.getRids();
+        }
+
+        public BPlusTreeIterator() {
+            this.node = root.getLeftmostLeaf();
+            this.Records = node.getRids();
+            this.index = 0;
+        }
+
+        public BPlusTreeIterator(LeafNode node, DataBox key) {
+            this.node = node;
+
+            int index = InnerNode.numLessThan(key, node.getKeys());
+            this.Records = node.getRids();
+
+            this.index = index;
+        }
 
         @Override
         public boolean hasNext() {
             // TODO(proj2): implement
+            if (index <= Records.size() - 1) {
+                return true;
+            }
 
-            return false;
+            if (node.getRightSibling().isPresent() && index == Records.size()) {
+                Long pageNum = node.getRightSibling().get().getPage().getPageNum();
+                exchange(pageNum);
+
+                return Records.size() != 0;
+            } else {
+                return false;
+            }
         }
 
         @Override
         public RecordId next() {
             // TODO(proj2): implement
+            if (hasNext()) {
+                return Records.get(index++);
+            }
 
             throw new NoSuchElementException();
         }

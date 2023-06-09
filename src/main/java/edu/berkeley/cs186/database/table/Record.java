@@ -13,7 +13,7 @@ import java.util.List;
  * A Record is just list of DataBoxes.
  */
 public class Record {
-    private List<DataBox> values;
+    private final List<DataBox> values;
 
     public Record(List<DataBox> values) {
         this.values = values;
@@ -21,8 +21,8 @@ public class Record {
 
     public Record(Object... values) {
         this.values = new ArrayList<>(values.length);
-        for (int i = 0; i < values.length; i++) {
-            this.values.add(DataBox.fromObject(values[i]));
+        for (Object value : values) {
+            this.values.add(DataBox.fromObject(value));
         }
     }
 

@@ -149,7 +149,7 @@ public abstract class DataBox implements Comparable<DataBox> {
      * <p>
      * Note that when DataBoxes are serialized, they do not serialize their type.
      * That is, serialized DataBoxes are not self-descriptive; you need the type
-     * of a Databox in order to parse it.
+     * of Databox in order to parse it.
      */
     public abstract byte[] toBytes();
 

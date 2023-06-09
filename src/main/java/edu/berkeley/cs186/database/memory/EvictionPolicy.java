@@ -5,7 +5,7 @@ package edu.berkeley.cs186.database.memory;
  */
 public interface EvictionPolicy {
     /**
-     * Called to initiaize a new buffer frame.
+     * Called to initialize a new buffer frame.
      *
      * @param frame new frame to be initialized
      */

@@ -15,7 +15,7 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     }
 
     /**
-     * Called to initiaize a new buffer frame.
+     * Called to initialize a new buffer frame.
      *
      * @param frame new frame to be initialized
      */

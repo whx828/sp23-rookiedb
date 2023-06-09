@@ -49,4 +49,3 @@ public interface BacktrackingIterator<T> extends Iterator<T> {
      */
     void reset();
 }
-

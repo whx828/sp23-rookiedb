@@ -29,7 +29,7 @@ package edu.berkeley.cs186.database.common;
  * to read the first 4 bytes (0x63, 0x73, 0x00, 0x00) in as an integer, despite
  * the first two bytes being part of characters, and not an integer.
  * <p>
- * In general you'll want to call your get operations in the same order as the
+ * In general, you'll want to call your get operations in the same order as the
  * put operations took place.
  */
 public interface Buffer {

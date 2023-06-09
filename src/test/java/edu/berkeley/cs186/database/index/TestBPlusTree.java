@@ -412,7 +412,7 @@ public class TestBPlusTree {
         // This test will generate 1000 keys and for trees of degree 2, 3 and 4
         // will scramble the keys and attempt to insert them.
         //
-        // After insertion we test scanAll and scanGreaterEqual to ensure all
+        // After insertion, we test scanAll and scanGreaterEqual to ensure all
         // the keys were inserted and could be retrieved in the proper order.
         //
         // Finally, we remove each of the keys one-by-one and check to see that

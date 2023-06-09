@@ -59,7 +59,7 @@ public class TableStats {
         this.numRecordsPerPage = numRecordsPerPage;
         this.numRecords = 0;
         this.histograms = new ArrayList<>();
-        for (Type t : schema.getFieldTypes()) {
+        for (Type ignored : schema.getFieldTypes()) {
             Histogram h = new Histogram();
             this.histograms.add(h);
         }
@@ -122,40 +122,40 @@ public class TableStats {
     /**
      * Estimates the table statistics for the table that would be produced after
      * filtering column `i` with `predicate` and `value`. For simplicity, we
-     * assume that columns are completeley uncorrelated. For example, imagine the
+     * assume that columns are completely uncorrelated. For example, imagine the
      * following table statistics for a table T(x:int, y:int).
      * <p>
-     * numRecords = 100
-     * numPages = 2
-     * Histogram x                         Histogram y
-     * ===========                         ===========
-     * 60 |                       50       60 |
-     * 50 |        40           +----+     50 |
-     * 40 |      +----+         |    |     40 |
-     * 30 |      |    |         |    |     30 |   20   20   20   20   20
-     * 20 |   10 |    |         |    |     20 | +----+----+----+----+----+
-     * 10 | +----+    | 00   00 |    |     10 | |    |    |    |    |    |
-     * 00 | |    |    +----+----+    |     00 | |    |    |    |    |    |
-     * ----------------------------        ----------------------------
-     * 0    1    2    3    4    5          0    1    2    3    4    5
-     * 0    0    0    0    0               0    0    0    0    0
+     *   numRecords = 100
+     *   numPages = 2
+     *               Histogram x                         Histogram y
+     *               ===========                         ===========
+     *   60 |                       50       60 |
+     *   50 |        40           +----+     50 |
+     *   40 |      +----+         |    |     40 |
+     *   30 |      |    |         |    |     30 |   20   20   20   20   20
+     *   20 |   10 |    |         |    |     20 | +----+----+----+----+----+
+     *   10 | +----+    | 00   00 |    |     10 | |    |    |    |    |    |
+     *   00 | |    |    +----+----+    |     00 | |    |    |    |    |    |
+     *       ----------------------------        ----------------------------
+     *        0    1    2    3    4    5          0    1    2    3    4    5
+     *              0    0    0    0    0               0    0    0    0    0
      * <p>
      * If we apply the filter `x < 20`, we estimate that we would have the
      * following table statistics.
      * <p>
-     * numRecords = 50
-     * numPages = 1
-     * Histogram x                         Histogram y
-     * ===========                         ===========
-     * 50 |        40                      50 |
-     * 40 |      +----+                    40 |
-     * 30 |      |    |                    30 |
-     * 20 |   10 |    |                    20 |   10   10   10   10   10
-     * 10 | +----+    | 00   00   00       10 | +----+----+----+----+----+
-     * 00 | |    |    +----+----+----+     00 | |    |    |    |    |    |
-     * ----------------------------        ----------------------------
-     * 0    1    2    3    4    5          0    1    2    3    4    5
-     * 0    0    0    0    0               0    0    0    0    0
+     *   numRecords = 50
+     *   numPages = 1
+     *               Histogram x                         Histogram y
+     *               ===========                         ===========
+     *   50 |        40                      50 |
+     *   40 |      +----+                    40 |
+     *   30 |      |    |                    30 |
+     *   20 |   10 |    |                    20 |   10   10   10   10   10
+     *   10 | +----+    | 00   00   00       10 | +----+----+----+----+----+
+     *   00 | |    |    +----+----+----+     00 | |    |    |    |    |    |
+     *       ----------------------------        ----------------------------
+     *        0    1    2    3    4    5          0    1    2    3    4    5
+     *              0    0    0    0    0               0    0    0    0    0
      */
     public TableStats copyWithPredicate(int column,
                                         PredicateOperator predicate,

@@ -96,7 +96,6 @@ public class Type {
         type = type.trim().toLowerCase();
         switch (type) {
             case "int":
-                ;
             case "integer":
                 return intType();
             case "char":
@@ -133,7 +132,7 @@ public class Type {
         // of an element of the type `s`. A Type is serialized as two integers. The
         // first is the ordinal corresponding to `t`. The second is `s`.
         //
-        // For example, the type "42-byte string" would serialized as the bytes [3,
+        // For example, the type "42-byte string" would serialize as the bytes [3,
         // 42] because 3 is the ordinal of the STRING TypeId and 42 is the number
         // of bytes in a 42-byte string (duh).
         ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES * 2);

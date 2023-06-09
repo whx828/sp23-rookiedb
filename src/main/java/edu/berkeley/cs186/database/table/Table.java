@@ -50,22 +50,22 @@ import java.util.Map;
  * <p>
  * All pages are data pages - there are no header pages, because all metadata is
  * stored elsewhere (as rows in the _metadata.tables table). Every data
- * page begins with a n-byte bitmap followed by m records. The bitmap indicates
+ * page begins with an n-byte bitmap followed by m records. The bitmap indicates
  * which records in the page are valid. The values of n and m are set to maximize the
  * number of records per page (see computeDataPageNumbers for details).
  * <p>
  * For example, here is a cartoon of what a table's file would look like if we
  * had 5-byte pages and 1-byte records:
  * <p>
- * +----------+----------+----------+----------+----------+ \
- * Page 0 | 1001xxxx | 01111010 | xxxxxxxx | xxxxxxxx | 01100001 |  |
- * +----------+----------+----------+----------+----------+  |
- * Page 1 | 1101xxxx | 01110010 | 01100100 | xxxxxxxx | 01101111 |  |- data
- * +----------+----------+----------+----------+----------+  |
- * Page 2 | 0011xxxx | xxxxxxxx | xxxxxxxx | 01111010 | 00100001 |  |
- * +----------+----------+----------+----------+----------+ /
- * \________/ \________/ \________/ \________/ \________/
- * bitmap     record 0   record 1   record 2   record 3
+ *          +----------+----------+----------+----------+----------+ \
+ *   Page 0 | 1001xxxx | 01111010 | xxxxxxxx | xxxxxxxx | 01100001 |  |
+ *          +----------+----------+----------+----------+----------+  |
+ *   Page 1 | 1101xxxx | 01110010 | 01100100 | xxxxxxxx | 01101111 |  |- data
+ *          +----------+----------+----------+----------+----------+  |
+ *   Page 2 | 0011xxxx | xxxxxxxx | xxxxxxxx | 01111010 | 00100001 |  |
+ *          +----------+----------+----------+----------+----------+ /
+ *           \________/ \________/ \________/ \________/ \________/
+ *            bitmap     record 0   record 1   record 2   record 3
  * <p>
  * - The first page (Page 0) is a data page. The first byte of this data page
  * is a bitmap, and the next four bytes are each records. The first and
@@ -124,6 +124,7 @@ public class Table implements BacktrackingIterable<Record> {
         // mark everything that is not used for records as metadata
         this.pageDirectory.setEmptyPageMetadataSize((short) (pageDirectory.getEffectivePageSize() - numRecordsPerPage
             * schema.getSizeInBytes()));
+
         this.stats = stats;
         if (!this.stats.containsKey(name)) this.stats.put(name, new TableStats(this.schema, this.numRecordsPerPage));
     }
@@ -208,7 +209,7 @@ public class Table implements BacktrackingIterable<Record> {
             page.getBuffer().get(bytes, 0, bitmapSizeInBytes);
             return bytes;
         } else {
-            return new byte[]{(byte) 0xFF};
+            return new byte[]{(byte) 0xFF}; // -1，Java 把 byte 当成有符号类型处理
         }
     }
 
@@ -570,4 +571,3 @@ public class Table implements BacktrackingIterable<Record> {
         }
     }
 }
-

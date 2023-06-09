@@ -17,51 +17,51 @@ import java.util.Iterator;
  * <p>
  * We can build the following histogram:
  * <p>
- * 10 |
- * 9 |         8
- * 8 |       +----+
- * 7 |       |    |
- * 6 |       |    |
- * 5 |       |    | 4
- * 4 |       |    +----+      3
- * 3 |    2  |    |    |    +----+
- * 2 |  +----+    |    | 1  |    |
- * 1 |  |    |    |    +----+    |
- * 0 |  |    |    |    |    |    |
- * ------------------------------
- * 0    10    20   30   40    50
+ *   10 |
+ *    9 |         8
+ *    8 |       +----+
+ *    7 |       |    |
+ *    6 |       |    |
+ *    5 |       |    | 4
+ *    4 |       |    +----+      3
+ *    3 |    2  |    |    |    +----+
+ *    2 |  +----+    |    | 1  |    |
+ *    1 |  |    |    |    +----+    |
+ *    0 |  |    |    |    |    |    |
+ *       ------------------------------
+ *        0    10    20   30   40    50
  * <p>
  * A histogram is an ordered list of B "buckets", each of which defines a range (low, high).
- * For the first, B - 1 buckets, the low of the range is inclusive an the high of the
+ * For the first, B - 1 buckets, the low of the range is inclusive and the high of the
  * range is exclusive. For the last Bucket the high of the range is inclusive as well.
  * Each bucket counts the number of values that fall within its range. In this project,
  * you will work with a floating point histogram where low and high are defined by floats.
- * For any other data type, we will map it so it fits into a floating point histogram.
+ * For any other data type, we will map it, so it fits into a floating point histogram.
  * <p>
  * <p>
  * The primary data structure to consider is Bucket<Float>[] buckets, which is a list of Bucket
  * objects
  * <p>
  * Bucket<Float> b = new Bucket(10.0, 100.0); //defines a bucket whose low value is 10 and high is 100
- * b.getStart(); //returns 10.0
- * b.getEnd(); //returns 100.0
- * b.increment(15);// adds the value 15 to the bucket
- * b.getCount();//returns the number of items added to the bucket
- * b.getDistinctCount();//returns the approximate number of distinct items added to the bucket
+ * b.getStart(); // returns 10.0
+ * b.getEnd(); // returns 100.0
+ * b.increment(15); // adds the value 15 to the bucket
+ * b.getCount(); // returns the number of items added to the bucket
+ * b.getDistinctCount(); // returns the approximate number of distinct items added to the bucket
  */
 public class Histogram {
-    private Bucket[] buckets; //An array of float buckets the basic data structure
+    private Bucket[] buckets; // An array of float buckets the basic data structure
 
     private float minValue;
     private float maxValue;
-    private float width;    // The width of each bucket
+    private float width; // The width of each bucket
 
-    /*This constructor initialize an empty histogram object*/
+    /* This constructor initialize an empty histogram object */
     public Histogram() {
         this(1);
     }
 
-    /*This constructor initialize a histogram object with a set number of buckets*/
+    /* This constructor initialize a histogram object with a set number of buckets */
     public Histogram(int numBuckets) {
         buckets = new Bucket[numBuckets];
         for (int i = 0; i < numBuckets; ++i) {
@@ -69,7 +69,7 @@ public class Histogram {
         }
     }
 
-    /*This is a copy constructor that generates a new histogram from a bucket list*/
+    /* This is a copy constructor that generates a new histogram from a bucket list */
     private Histogram(Bucket[] buckets) {
         this.buckets = buckets;
         this.minValue = buckets[0].getStart();
@@ -119,7 +119,7 @@ public class Histogram {
      * 4. Populate the buckets by incrementing
      * <p>
      * Edge cases: width = 0, put an item only in the last bucket.
-     * final buckunreachableet is inclusive on the last value.
+     * finally unreachable bucket is inclusive on the last value.
      */
     public void buildHistogram(Table table, int attribute) {
         // 1. first calculate the min and the max values
@@ -148,7 +148,7 @@ public class Histogram {
             int bucketIndex;
 
             if (this.width == 0) {
-                bucketIndex = this.buckets.length - 1; //always put in the last bin
+                bucketIndex = this.buckets.length - 1; // always put in the last bin
             } else {
                 bucketIndex = (int) Math.floor((quantizedValue - this.minValue) / this.width);
                 bucketIndex = Math.max(0, bucketIndex);
@@ -158,7 +158,7 @@ public class Histogram {
             buckets[bucketIndex].increment(quantizedValue);
         }
     }
-    //Accessor Methods//////////////////////////////////////////////////////////////
+    // Accessor Methods //////////////////////////////////////////////////////////////
 
     /**
      * Return an estimate of the number of distinct values in the histogram.
@@ -183,12 +183,13 @@ public class Histogram {
         return buckets[i];
     }
 
-    //Operations//////////////////////////////////////////////////////////////
+    // Operations //////////////////////////////////////////////////////////////
 
-    /* Given a predicate, return a multiplicative mask for the histogram. That is,
+    /**
+     * Given a predicate, return a multiplicative mask for the histogram. That is,
      * an array of size numBuckets where each entry is a float between 0 and 1 that represents a
      * scaling to update the histogram count. Suppose we have this histogram with 5 buckets:
-     *
+     * <p>
      *   10 |
      *    9 |         8
      *    8 |       +----+
@@ -202,9 +203,9 @@ public class Histogram {
      *    0 |  |    |    |    |    |    |
      *       ------------------------------
      *        0    10    20   30   40    50
-     *
+     * <p>
      * Then we get a mask, [0, .25, .5, 0, 1], the resulting histogram is:
-     *
+     * <p>
      *   10 |
      *    9 |
      *    8 |
@@ -218,13 +219,13 @@ public class Histogram {
      *    0 |    0  |    |    |  0 |    |
      *       ------------------------------
      *        0    10    20   30   40    50
-     *
+     * <p>
      * Counts are always an integer and round to the nearest value.
      */
     public float[] filter(PredicateOperator predicate, DataBox value) {
         float quant = quantization(value);
 
-        //do not handle non equality predicates on strings
+        // do not handle non equality predicates on strings
         if (value.getTypeId() == TypeId.STRING &&
             predicate != PredicateOperator.EQUALS &&
             predicate != PredicateOperator.NOT_EQUALS) {
@@ -256,7 +257,7 @@ public class Histogram {
         return result;
     }
 
-    /*Nothing fancy here take max of gt and equals*/
+    /* Nothing fancy here take max of gt and equals */
     private float[] allGreaterThanEquals(float qvalue) {
         float[] result = new float[this.buckets.length];
         float[] resultGT = allGreaterThan(qvalue);
@@ -269,7 +270,7 @@ public class Histogram {
         return result;
     }
 
-    /*Nothing fancy here take max of lt and equals*/
+    /* Nothing fancy here take max of lt and equals */
     private float[] allLessThanEquals(float qvalue) {
         float[] result = new float[this.buckets.length];
         float[] resultLT = allLessThan(qvalue);
@@ -282,7 +283,7 @@ public class Histogram {
         return result;
     }
 
-    //See comments above filter()
+    // See comments above filter()
 
     /**
      * Given a quantized value, set the bucket that contains the value to 1/distinctCount,
@@ -300,9 +301,9 @@ public class Histogram {
             }
         }
 
-        //handle last value
+        // handle last value
         if (qvalue >= this.buckets[this.buckets.length - 1].getStart() &&
-            qvalue <= this.buckets[this.buckets.length - 1].getEnd()) {
+            qvalue <= this.buckets[this.buckets.length - 1].getEnd()) { // 这个 <= 是单独处理最后一个值的原因
             int distinctCount = this.buckets[this.buckets.length - 1].getDistinctCount();
             result[this.buckets.length - 1] = Math.min(1.0f / distinctCount, 1.0f);
         } else {
@@ -327,7 +328,8 @@ public class Histogram {
                 result[i] = 1.0f;
             }
         }
-        //handle last value
+
+        // handle last value
         if (qvalue >= this.buckets[this.buckets.length - 1].getStart() &&
             qvalue <= this.buckets[this.buckets.length - 1].getEnd()) {
             int distinctCount = this.buckets[this.buckets.length - 1].getDistinctCount();
@@ -394,7 +396,7 @@ public class Histogram {
         int total = 0;
 
         for (int i = 0; i < this.buckets.length; i++) {
-            //non empty buckets
+            // non-empty buckets
             sum += reduction[i] * this.buckets[i].getDistinctCount();
             total += this.buckets[i].getDistinctCount();
         }
@@ -408,15 +410,15 @@ public class Histogram {
      * the example histogram from the top of the file, we would get the following
      * histogram:
      * <p>
-     * 6 |
-     * 5 |              4
-     * 4 |            +----+      3
-     * 3 |            |    |    +----+
-     * 2 |            |    | 1  |    |
-     * 1 |    0    0  |    +----+    |
-     * 0 |  +----+----+    |    |    |
-     * ------------------------------
-     * 0    10   20   30   40   50]
+     *    6 |
+     *    5 |              4
+     *    4 |            +----+      3
+     *    3 |            |    |    +----+
+     *    2 |            |    | 1  |    |
+     *    1 |    0    0  |    +----+    |
+     *    0 |  +----+----+    |    |    |
+     *       ------------------------------
+     *         0    10   20   30   40   50
      */
     public Histogram copyWithPredicate(PredicateOperator predicate, DataBox value) {
         float[] reduction = filter(predicate, value);
@@ -430,8 +432,7 @@ public class Histogram {
             newBuckets[i].setDistinctCount(newDistinctCount);
         }
 
-        Histogram h = new Histogram(newBuckets);
-        return h;
+        return new Histogram(newBuckets);
     }
 
     // Uniformly reduces the values across the board with the mean reduction.

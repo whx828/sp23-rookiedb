@@ -6,4 +6,3 @@ public class DuplicateLockRequestException extends RuntimeException {
         super(message);
     }
 }
-

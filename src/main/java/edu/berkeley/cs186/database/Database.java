@@ -244,10 +244,12 @@ public class Database implements AutoCloseable {
     private void initIndexInfo() {
         long indexInfoPage0 = DiskSpaceManager.getVirtualPageNum(2, 0);
         diskSpaceManager.allocPage(indexInfoPage0);
+
         LockContext indexInfoContext = new DummyLockContext("_dummyIndexInfo");
         PageDirectory pageDirectory = new PageDirectory(bufferManager, 2, indexInfoPage0, (short) 0,
             indexInfoContext);
-        indexMetadata = new Table(INDEX_INFO_TABLE_NAME, getIndexInfoSchema(), pageDirectory, indexInfoContext, stats);
+        indexMetadata = new Table(INDEX_INFO_TABLE_NAME, getIndexInfoSchema(), pageDirectory,
+            indexInfoContext, stats);
     }
 
     private void loadMetadataTables() {
@@ -288,7 +290,6 @@ public class Database implements AutoCloseable {
         dropDemoTables();
 
         this.bufferManager.evictAll();
-
         this.recoveryManager.close();
 
         this.tableMetadata = null;
@@ -313,6 +314,7 @@ public class Database implements AutoCloseable {
     public int getWorkMem() {
         // cap work memory at number of memory pages -- this is likely to cause out of memory
         // errors if actually set this high
+
         return Math.min(this.workMem, this.numMemoryPages);
     }
 
@@ -369,7 +371,7 @@ public class Database implements AutoCloseable {
     }
 
     /**
-     * @return (rid, metadata) pairs for all of the tables currently in the
+     * @return (rid, metadata) pairs for all the tables currently in the
      * database. Assumes that caller has already acquired necessary locks on
      * metadata.
      */
@@ -453,7 +455,7 @@ public class Database implements AutoCloseable {
      * @param tableName
      * @param columnName
      * @return the (rid, metadata) pair corresponding to the index on
-     * tableName.columnName inside of _metadata.indices. Returns null if no
+     * tableName.columnName inside _metadata.indices. Returns null if no
      * such index exists.
      */
     private Pair<RecordId, BPlusTreeMetadata> getColumnIndexMetadata(String tableName, String columnName) {
@@ -600,18 +602,20 @@ public class Database implements AutoCloseable {
      */
     public boolean loadCSV(String name) throws IOException {
         InputStream is = Database.class.getClassLoader().getResourceAsStream(name + ".csv");
+        assert is != null;
         InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
         BufferedReader buffered = new BufferedReader(reader);
         String[] header = buffered.readLine().split(",");
         Schema schema = new Schema();
-        for (int i = 0; i < header.length; i++) {
-            String[] parts = header[i].split(" ", 2);
+        for (String s : header) {
+            String[] parts = s.split(" ", 2);
             // Must have at least one space separating field and type
             assert parts.length == 2;
             String fieldName = parts[0];
             Type fieldType = Type.fromString(parts[1]);
             schema.add(fieldName, fieldType);
         }
+
         List<Record> rows = new ArrayList<>();
         String row = buffered.readLine();
         while (row != null) {

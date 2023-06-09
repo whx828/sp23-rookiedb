@@ -33,6 +33,7 @@ public class PrettyPrinter {
         } else if (literalLower.equals("false")) {
             return new BoolDataBox(false);
         }
+
         if (literal.indexOf('.') != -1) {
             return new FloatDataBox(Float.parseFloat(literal));
         } else {

@@ -15,10 +15,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * An implementation of a disk space manager with virtual page translation, and
  * two levels of header pages, allowing for (with page size of 4K) 256G worth of data per partition:
  * <p>
- * [master page]
- * /                              |                               \
- * [header page]                                                    [header page]
- * /    |     |     |     \                   ...                   /    |     |     |     \
+ *                                           [master page]
+ *                  /                              |                               \
+ *           [header page]                                                    [header page]
+ *     /    |     |     |     \                   ...                   /    |     |     |     \
  * [data] [data] ... [data] [data]                                   [data] [data] ... [data] [data]
  * <p>
  * Each header page stores a bitmap, indicating whether each of the data pages has been allocated,
@@ -199,6 +199,7 @@ public class DiskSpaceManagerImpl implements DiskSpaceManager {
     @Override
     public long allocPage(int partNum) {
         this.managerLock.lock();
+
         PartitionHandle pi;
         try {
             pi = getPartInfo(partNum);

@@ -3,7 +3,7 @@ package edu.berkeley.cs186.database.common;
 /**
  * Predicate operators represent the possible comparison's we allow in
  * our database implementation. For example, in a WHERE clause we may
- * specificy WHERE table.value >= 186. To express this we would use
+ * specify WHERE table.value >= 186. To express this we would use
  * PredicateOperator.GREATER_THAN_EQUALS. This is useful in QueryPlan.select()
  * when we're trying to add constraints to the WHERE clause of our query.
  */

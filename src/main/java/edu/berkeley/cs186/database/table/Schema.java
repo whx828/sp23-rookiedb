@@ -6,6 +6,7 @@ import edu.berkeley.cs186.database.databox.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,8 +16,8 @@ import java.util.Objects;
  * fields. For example, the following schema:
  * <p>
  * Schema s = new Schema()
- * .add("x", Type.intType())
- * .add("y", Type.floatType());
+ *     .add("x", Type.intType())
+ *     .add("y", Type.floatType());
  * <p>
  * represents a table with an int field named "x" and a float field named "y".
  */
@@ -78,7 +79,7 @@ public class Schema {
             int fieldSize = buf.getInt();
             byte[] bytes = new byte[fieldSize];
             buf.get(bytes);
-            s.add(new String(bytes, Charset.forName("UTF-8")), Type.fromBytes(buf));
+            s.add(new String(bytes, StandardCharsets.UTF_8), Type.fromBytes(buf));
         }
         return s;
     }
@@ -173,7 +174,7 @@ public class Schema {
     /**
      * @param other
      * @return Concatenates two schema together, returning a new schema
-     * containing the the fields of this schema immediately followed by the
+     * containing the fields of this schema immediately followed by the
      * fields of `other`
      */
     public Schema concat(Schema other) {
@@ -256,7 +257,7 @@ public class Schema {
         buf.putInt(fieldNames.size());
         for (int i = 0; i < fieldNames.size(); ++i) {
             buf.putInt(fieldNames.get(i).length());
-            buf.put(fieldNames.get(i).getBytes(Charset.forName("UTF-8")));
+            buf.put(fieldNames.get(i).getBytes(StandardCharsets.UTF_8));
             buf.put(fieldTypes.get(i).toBytes());
         }
         return buf.array();
@@ -267,7 +268,7 @@ public class Schema {
         StringBuilder sb = new StringBuilder("(");
         for (int i = 0; i < fieldNames.size(); ++i) {
             sb.append(String.format("%s: %s", fieldNames.get(i), fieldTypes.get(i)));
-            if (i != fieldNames.size()) {
+            if (i != fieldNames.size() - 1) {
                 sb.append(", ");
             }
         }

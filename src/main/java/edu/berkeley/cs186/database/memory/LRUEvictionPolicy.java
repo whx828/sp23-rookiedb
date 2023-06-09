@@ -16,7 +16,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
     }
 
     /**
-     * Called to initiaize a new buffer frame.
+     * Called to initialize a new buffer frame.
      *
      * @param frame new frame to be initialized
      */
@@ -27,6 +27,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
         frameTag.prev = listTail.prev;
         listTail.prev = frameTag;
         frameTag.prev.next = frameTag;
+
         frameTag.cur = frame;
         frame.tag = frameTag;
     }
@@ -43,6 +44,7 @@ public class LRUEvictionPolicy implements EvictionPolicy {
         frameTag.next.prev = frameTag.prev;
         frameTag.next = this.listTail;
         frameTag.prev = this.listTail.prev;
+
         this.listTail.prev.next = frameTag;
         this.listTail.prev = frameTag;
     }
