@@ -228,5 +228,4 @@ public abstract class QueryOperator implements Iterable<Record> {
         LIMIT,
         MATERIALIZE
     }
-
 }

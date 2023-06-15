@@ -67,8 +67,8 @@ public abstract class TransactionContext implements AutoCloseable {
      */
     public static void unsetTransaction() {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        for (int i = 0; i < trace.length; i++) {
-            String s = trace[i].toString();
+        for (StackTraceElement stackTraceElement : trace) {
+            String s = stackTraceElement.toString();
         }
         long threadId = Thread.currentThread().getId();
         TransactionContext currTransaction = threadTransactions.get(threadId);
@@ -156,7 +156,7 @@ public abstract class TransactionContext implements AutoCloseable {
     public abstract Iterator<Record> lookupKey(String tableName, String columnName, DataBox key);
 
     /**
-     * Returns a backtracking iterator over all of the records in `tableName`.
+     * Returns a backtracking iterator over all the records in `tableName`.
      */
     public abstract BacktrackingIterator<Record> getRecordIterator(String tableName);
 

@@ -27,4 +27,3 @@ public class ArrayBacktrackingIterator<T> extends IndexBacktrackingIterator<T> {
         return this.array[index];
     }
 }
-

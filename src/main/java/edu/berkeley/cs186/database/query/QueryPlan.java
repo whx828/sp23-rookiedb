@@ -307,8 +307,7 @@ public class QueryPlan {
      * - sets the current final operator to the new project operator
      */
     private void addSelectsNaive() {
-        for (int i = 0; i < selectPredicates.size(); i++) {
-            SelectPredicate predicate = selectPredicates.get(i);
+        for (SelectPredicate predicate : selectPredicates) {
             this.finalOperator = new SelectOperator(
                 this.finalOperator,
                 predicate.tableName + "." + predicate.column,
@@ -370,7 +369,7 @@ public class QueryPlan {
     }
 
     /**
-     * Join the leftColumnName column of the existing queryplan against the
+     * Join the leftColumnName column of the existing query plan against the
      * rightColumnName column of tableName, aliased as aliasTableName.
      *
      * @param tableName       the table to join against
@@ -427,7 +426,7 @@ public class QueryPlan {
         }
         cteAliases.put(alias, tableName);
         for (String k : aliases.keySet()) {
-            if (aliases.get(k).toLowerCase().equals(alias.toLowerCase())) {
+            if (aliases.get(k).equalsIgnoreCase(alias)) {
                 aliases.put(k, tableName);
             }
         }
@@ -505,6 +504,25 @@ public class QueryPlan {
      */
     public QueryOperator minCostSingleAccess(String table) {
         QueryOperator minOp = new SequentialScanOperator(this.transaction, table);
+        int minCost = minOp.estimateIOCost();
+        int except = -1;
+
+        List<Integer> indexes = getEligibleIndexColumns(table);
+        List<SelectPredicate> predicates = this.selectPredicates;
+
+        for (int index : indexes) {
+            SelectPredicate predicate = predicates.get(index);
+            QueryOperator indexScanOp = new IndexScanOperator(
+                this.transaction, table, predicate.column, predicate.operator, predicate.value);
+            int ISCost = indexScanOp.estimateIOCost();
+            if (ISCost < minCost) {
+                minOp = indexScanOp;
+                minCost = ISCost;
+                except = index;
+            }
+        }
+
+        minOp = addEligibleSelections(minOp, except);
 
         // TODO(proj3_part2): implement
         return minOp;
@@ -512,7 +530,7 @@ public class QueryPlan {
 
     /**
      * Given a join predicate between left and right operators, finds the lowest
-     * cost join operator out of join types in JoinOperator.JoinType. By default
+     * cost join operator out of join types in JoinOperator.JoinType. By default,
      * only considers SNLJ and BNLJ to prevent dependencies on GHJ, Sort and SMJ.
      * <p>
      * Reminder: Your implementation does not need to consider cartesian products
@@ -561,19 +579,48 @@ public class QueryPlan {
         // TODO(proj3_part2): implement
         // We provide a basic description of the logic you have to implement:
         // For each set of tables in prevMap
-        //   For each join predicate listed in this.joinPredicates
-        //      Get the left side and the right side of the predicate (table name and column)
-        //
-        //      Case 1: The set contains left table but not right, use pass1Map
-        //              to fetch an operator to access the rightTable
-        //      Case 2: The set contains right table but not left, use pass1Map
-        //              to fetch an operator to access the leftTable.
-        //      Case 3: Otherwise, skip this join predicate and continue the loop.
-        //
-        //      Using the operator from Case 1 or 2, use minCostJoinType to
-        //      calculate the cheapest join with the new table (the one you
-        //      fetched an operator for from pass1Map) and the previously joined
-        //      tables. Then, update the result map if needed.
+        for (Map.Entry<Set<String>, QueryOperator> entry : prevMap.entrySet()) {
+            Set<String> key = entry.getKey();
+            QueryOperator value = entry.getValue();
+
+            // For each join predicate listed in this.joinPredicates
+            for (JoinPredicate predicate : this.joinPredicates) {
+                // Get the left side and the right side of the predicate (table name and column)
+                String leftTable = predicate.leftTable;
+                String rightTable = predicate.rightTable;
+                String leftColumn = predicate.leftColumn;
+                String rightColumn = predicate.rightColumn;
+
+                // Case 1: The set contains left table but not right, use pass1Map
+                // to fetch an operator to access the rightTable
+                if (key.contains(leftTable) && !key.contains(rightTable)) {
+                    Set<String> rightSet = new HashSet<>();
+                    rightSet.add(rightTable);
+                    QueryOperator rightOp = pass1Map.get(rightSet);
+                    QueryOperator joinOp = minCostJoinType(value, rightOp, leftColumn, rightColumn);
+                    rightSet.addAll(key);
+                    result.put(rightSet, joinOp);
+                }
+                // Case 2: The set contains right table but not left, use pass1Map
+                // to fetch an operator to access the leftTable.
+                else if (key.contains(rightTable) && !key.contains(leftTable)) {
+                    Set<String> leftSet = new HashSet<>();
+                    leftSet.add(leftTable);
+                    QueryOperator leftOp = pass1Map.get(leftSet);
+                    QueryOperator joinOp = minCostJoinType(leftOp, value, leftColumn, rightColumn);
+                    leftSet.addAll(key);
+                    result.put(leftSet, joinOp);
+                }
+
+                // Case 3: Otherwise, skip this join predicate and continue the loop.
+                //
+                // Using the operator from Case 1 or 2, use minCostJoinType to
+                // calculate the cheapest join with the new table (the one you
+                // fetched an operator for from pass1Map) and the previously joined
+                // tables. Then, update the result map if needed.
+            }
+        }
+
         return result;
     }
 
@@ -615,15 +662,31 @@ public class QueryPlan {
         // Pass 1: For each table, find the lowest cost QueryOperator to access
         // the table. Construct a mapping of each table name to its lowest cost
         // operator.
-        //
+        Map<Set<String>, QueryOperator> map = new HashMap<>();
+        for (String tableName : tableNames) {
+            QueryOperator op = minCostSingleAccess(tableName);
+            Set<String> set = new HashSet<>();
+            set.add(tableName);
+            map.put(set, op);
+        }
+
         // Pass i: On each pass, use the results from the previous pass to find
         // the lowest cost joins with each table from pass 1. Repeat until all
         // tables have been joined.
-        //
+        Map<Set<String>, QueryOperator> pass1Map = map;
+        while (map.size() != 1) {
+            map = minCostJoins(map, pass1Map);
+        }
+
         // Set the final operator to the lowest cost operator from the last
         // pass, add group by, project, sort and limit operators, and return an
         // iterator over the final operator.
-        return this.executeNaive(); // TODO(proj3_part2): Replace this!
+        finalOperator = minCostOperator(map);
+        addGroupBy();
+        addProject();
+        addSort();
+        addLimit();
+        return finalOperator.iterator();
     }
 
     // Task 7: Optimal Plan Selection //////////////////////////////////////////
@@ -632,7 +695,7 @@ public class QueryPlan {
      * Given a simple query over a single table without any joins, such as:
      * SELECT * FROM table WHERE table.column >= 186;
      * <p>
-     * We can take advantage of an index over table.column to perform a over
+     * We can take advantage of an index over table.column to perform an over
      * only values that meet the predicate. This function determines whether or
      * not there are any columns that we can perform this optimization with.
      *
@@ -732,6 +795,7 @@ public class QueryPlan {
                 this.tableName = column.split("\\.")[0];
                 column = column.split("\\.")[1];
             } else this.tableName = resolveColumn(column);
+
             this.column = column;
             this.operator = operator;
             this.value = value;
@@ -767,6 +831,7 @@ public class QueryPlan {
             this.leftColumn = leftColumn;
             this.rightTable = rightColumn.split("\\.")[0];
             this.rightColumn = rightColumn;
+
             if (!tableName.equals(rightTable) && !tableName.equals(leftTable)) {
                 throw new IllegalArgumentException(String.format(
                     "`%s` is invalid. ON clause of INNER JOIN must contain the " +
@@ -787,5 +852,4 @@ public class QueryPlan {
                 unAliased, this.joinTable, this.leftColumn, this.rightColumn);
         }
     }
-
 }

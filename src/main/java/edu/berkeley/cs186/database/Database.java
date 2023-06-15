@@ -70,7 +70,7 @@ import java.util.function.UnaryOperator;
  * the names of indices. For example, if a user wants to get shared access to
  * the index on column `rowId` of `someTable`, they would need to acquire an
  * S lock on `database/_metadata.indices/someTable/rowId`. If a user wanted
- * to acquire exclusive access on all of the indices of `someTable` (for example
+ * to acquire exclusive access on all the indices of `someTable` (for example
  * to insert a new record into every index) they would need to acquire an
  * X lock on `database/_metadata.indices/someTable`.
  */
@@ -401,7 +401,7 @@ public class Database implements AutoCloseable {
     /**
      * @param tableName
      * @return the (rid, metadata) pair for the table specified by `tableName`'s
-     * entry inside of _metadata.tables. Returns null if the table does not exist.
+     * entry inside _metadata.tables. Returns null if the table does not exist.
      */
     private Pair<RecordId, TableMetadata> getTableMetadata(String tableName) {
         tableName = normalize(tableName);
@@ -476,8 +476,8 @@ public class Database implements AutoCloseable {
 
     /**
      * @param tableName
-     * @return a list of (rid, metadata) pairs for all of the indices on the
-     * table `tableName` inside of _metadata.indices. Returns an empty list
+     * @return a list of (rid, metadata) pairs for all the indices on the
+     * table `tableName` inside _metadata.indices. Returns an empty list
      * if the table does not exist, or if no indices are built on the table.
      */
     private List<Pair<RecordId, BPlusTreeMetadata>> getTableIndicesMetadata(String tableName) {

@@ -81,5 +81,4 @@ public class SequentialScanOperator extends QueryOperator {
     public int estimateIOCost() {
         return this.transaction.getNumDataPages(this.tableName);
     }
-
 }

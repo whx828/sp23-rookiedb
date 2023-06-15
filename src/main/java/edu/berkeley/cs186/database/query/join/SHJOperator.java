@@ -20,7 +20,7 @@ public class SHJOperator extends JoinOperator {
     /**
      * This class represents a simple hash join. To join the two relations the
      * class will attempt a single partitioning phase of the left records and
-     * then probe with all of the right records. It will fail if any of the
+     * then probe with all the right records. It will fail if any of the
      * partitions are larger than the B-2 pages of memory needed to construct
      * the in memory hash table by throwing an IllegalArgumentException.
      */
@@ -55,7 +55,7 @@ public class SHJOperator extends JoinOperator {
             this.joinedRecords = new Run(getTransaction(), getSchema());
             this.run(getLeftSource(), getRightSource(), 1);
         }
-        ;
+
         return joinedRecords.iterator();
     }
 
@@ -138,8 +138,8 @@ public class SHJOperator extends JoinOperator {
         // Partition records into left and right
         this.partition(partitions, leftRecords);
 
-        for (int i = 0; i < partitions.length; i++) {
-            buildAndProbe(partitions[i], rightRecords);
+        for (Partition partition : partitions) {
+            buildAndProbe(partition, rightRecords);
         }
     }
 
@@ -151,7 +151,7 @@ public class SHJOperator extends JoinOperator {
      */
     private Partition[] createPartitions() {
         int usableBuffers = this.numBuffers - 1;
-        Partition partitions[] = new Partition[usableBuffers];
+        Partition[] partitions = new Partition[usableBuffers];
         for (int i = 0; i < usableBuffers; i++) {
             Schema schema = getLeftSource().getSchema();
             partitions[i] = new Partition(getTransaction(), schema);
@@ -159,4 +159,3 @@ public class SHJOperator extends JoinOperator {
         return partitions;
     }
 }
-

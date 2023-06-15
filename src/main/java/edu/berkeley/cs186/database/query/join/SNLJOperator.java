@@ -102,6 +102,4 @@ public class SNLJOperator extends JoinOperator {
             return nextRecord;
         }
     }
-
 }
-

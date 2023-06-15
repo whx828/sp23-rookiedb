@@ -378,5 +378,4 @@ public class TestSortOperator {
             checkIOs(0);
         }
     }
-
 }

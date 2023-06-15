@@ -108,7 +108,6 @@ class GroupByOperator extends QueryOperator {
                 String tableName;
                 if (this.hashGroupTempTables.containsKey(key)) {
                     tableName = this.hashGroupTempTables.get(key);
-                    ;
                 } else {
                     tableName = GroupByOperator.this.transaction.createTempTable(
                         GroupByOperator.this.getSource().getSchema());

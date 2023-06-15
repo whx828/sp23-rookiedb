@@ -50,7 +50,7 @@ public class BNLJOperator extends JoinOperator {
      */
     private class BNLJIterator implements Iterator<Record> {
         // Iterator over all the records of the left source
-        private Iterator<Record> leftSourceIterator;
+        private final Iterator<Record> leftSourceIterator;
         // Iterator over all the records of the right source
         private BacktrackingIterator<Record> rightSourceIterator;
         // Iterator over records in the current block of left pages
@@ -88,6 +88,14 @@ public class BNLJOperator extends JoinOperator {
          */
         private void fetchNextLeftBlock() {
             // TODO(proj3_part1): implement
+            if (!leftSourceIterator.hasNext()) {
+                return;
+            }
+
+            leftBlockIterator = QueryOperator
+                .getBlockIterator(leftSourceIterator, getLeftSource().getSchema(), numBuffers - 2);
+            leftBlockIterator.markNext();
+            leftRecord = leftBlockIterator.next();
         }
 
         /**
@@ -103,6 +111,13 @@ public class BNLJOperator extends JoinOperator {
          */
         private void fetchNextRightPage() {
             // TODO(proj3_part1): implement
+            if (!rightSourceIterator.hasNext()) {
+                return;
+            }
+
+            rightPageIterator = QueryOperator
+                .getBlockIterator(rightSourceIterator, getRightSource().getSchema(), 1);
+            rightPageIterator.markNext();
         }
 
         /**
@@ -115,7 +130,37 @@ public class BNLJOperator extends JoinOperator {
          */
         private Record fetchNextRecord() {
             // TODO(proj3_part1): implement
-            return null;
+            while (true) {
+                if (rightPageIterator.hasNext()) {
+                    Record rightRecord = rightPageIterator.next();
+                    if (compare(leftRecord, rightRecord) == 0) {
+                        return leftRecord.concat(rightRecord);
+                    }
+                    continue;
+                }
+
+                if (leftBlockIterator.hasNext()) {
+                    leftRecord = leftBlockIterator.next();
+                    rightPageIterator.reset();
+                    continue;
+                }
+
+                if (rightSourceIterator.hasNext()) {
+                    fetchNextRightPage();
+                    leftBlockIterator.reset();
+                    leftRecord = leftBlockIterator.next();
+                    continue;
+                }
+
+                if (leftSourceIterator.hasNext()) {
+                    fetchNextLeftBlock();
+                    rightSourceIterator = getRightSource().backtrackingIterator();
+                    fetchNextRightPage();
+                    continue;
+                }
+
+                return null;
+            }
         }
 
         /**
