@@ -9,6 +9,7 @@ import edu.berkeley.cs186.database.cli.parser.ParseException;
 import edu.berkeley.cs186.database.cli.parser.RookieParser;
 import edu.berkeley.cs186.database.cli.parser.TokenMgrError;
 import edu.berkeley.cs186.database.cli.visitor.StatementListVisitor;
+import edu.berkeley.cs186.database.concurrency.LockManager;
 import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.Schema;
 import edu.berkeley.cs186.database.table.Table;
@@ -57,10 +58,10 @@ public class CommandLineInterface {
 
     public static void main(String args[]) throws IOException {
         // Basic database for project 0 through 3
-        Database db = new Database("demo", 25);
+        // Database db = new Database("demo", 25);
 
         // Use the following after completing project 4 (locking)
-        // Database db = new Database("demo", 25, new LockManager());
+        Database db = new Database("demo", 25, new LockManager());
 
         // Use the following after completing project 5 (recovery)
         // Database db = new Database("demo", 25, new LockManager(), new ClockEvictionPolicy(), true);

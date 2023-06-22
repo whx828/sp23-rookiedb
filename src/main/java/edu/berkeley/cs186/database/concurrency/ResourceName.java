@@ -14,7 +14,7 @@ import java.util.List;
  * "someTable" is the name of the table the page belongs to, and 10 is the page
  * number. We store this as the list ["database", "someTable", "10"] and its
  * ancestors on the hierarchy would be ["database"] (which represents the entire
- * database), and ["database", "someTable"] (which represents the the table,
+ * database), and ["database", "someTable"] (which represents the table,
  * of which this is a page of).
  */
 public class ResourceName {
@@ -56,9 +56,8 @@ public class ResourceName {
             return false;
         }
         Iterator<String> mine = names.iterator();
-        Iterator<String> others = other.names.iterator();
-        while (others.hasNext()) {
-            if (!mine.next().equals(others.next())) {
+        for (String name : other.names) {
+            if (!mine.next().equals(name)) {
                 return false;
             }
         }
