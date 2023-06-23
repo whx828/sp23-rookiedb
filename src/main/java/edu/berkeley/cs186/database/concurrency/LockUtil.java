@@ -43,44 +43,51 @@ public class LockUtil {
 
         // TODO(proj4_part2): implement
         // case 1: The current lock type can effectively substitute the requested type
-        if (LockType.substitutable(effectiveLockType, requestType)) return;
+        if (effectiveLockType.equals(requestType) ||
+            LockType.substitutable(effectiveLockType, requestType)) return;
 
         // case 2: The current lock type is IX and the requested lock is S
-        if (explicitLockType == LockType.IX && requestType == LockType.S) {
+        if (explicitLockType.equals(LockType.IX) && requestType.equals(LockType.S)) {
+            // 首先检查父节点是否满足条件
+            if (!(parentContext.getEffectiveLockType(transaction).equals(LockType.SIX)
+                || parentContext.getEffectiveLockType(transaction).equals(LockType.IX))) {
+                enforceLock(transaction, parentContext, LockType.IX);
+            }
             lockContext.promote(transaction, LockType.SIX);
             return;
         }
 
         // case 3: The current lock type is an intent lock
         if (explicitLockType.isIntent()) {
+            // 可以满足 IS -> S, IX -> X, SIX -> X 且父节点限制可以被满足
             lockContext.escalate(transaction);
+            // S -> X 留下
             explicitLockType = lockContext.getExplicitLockType(transaction);
-            if (explicitLockType == requestType || explicitLockType == LockType.X) return;
+            if (!(explicitLockType.equals(LockType.S) && requestType.equals(LockType.X))) return;
         }
 
         // case 4: None of the above (now explicit lock type can only be S or NL)
         // more specifically, the (explicit lock type, request type) pair can only be (NL, S), (NL, X), (S, X)
-        if (requestType == LockType.S) {
-            // 尝试在当前资源的祖先 context 上获得 IS，为了尽可能小的(意向)锁
-            enforceLock(transaction, parentContext, LockType.IS);
-        } else {
-            // 尝试在当前资源的祖先 context 上获得 IX，为了尽可能小的(意向)锁
-            enforceLock(transaction, parentContext, LockType.IX);
-        }
-
-        if (explicitLockType == LockType.NL) {
-            // (NL, S) -> S or (NL, X) -> X
-            // 祖先处理完毕，获得 S or X
-            lockContext.acquire(transaction, requestType);
-        } else {
-            // (S, X) -> X
+        if (explicitLockType.equals(LockType.S)) {
+            // (IS, X) -> X
+            if (parentContext != null && !LockType.canBeParentLock(parentContext.getExplicitLockType(transaction), requestType)) {
+                enforceLock(transaction, parentContext, LockType.IX);
+            }
             // 祖先处理完毕，从 S 升级到 X
             lockContext.promote(transaction, requestType);
+        } else {
+            // (NL, S) -> S or (NL, X) -> X
+            if (parentContext != null && !LockType.canBeParentLock(parentContext.getExplicitLockType(transaction), requestType)) {
+                LockType intentLockType = requestType.equals(LockType.X) ? LockType.IX : LockType.IS;
+                enforceLock(transaction, parentContext, intentLockType);
+            }
+            // 祖先处理完毕，获得 S or X
+            lockContext.acquire(transaction, requestType);
         }
     }
 
     // TODO(proj4_part2) add any helper methods you want
-    // 递归地在所有父级 context 上强制获得 IS 或 IX
+    // 递归地在所有父级 context 上强制获得 IS / IX / SIX
     private static void enforceLock(TransactionContext transaction, LockContext lockContext, LockType lockType) {
         assert (lockType == LockType.IS || lockType == LockType.IX);
         if (lockContext == null) return;
@@ -89,13 +96,16 @@ public class LockUtil {
 
         // 对于 NL 或者 S 的父级，currLockType 只可能是 S/IS/IX/SIX/NL 或者 S/IS
         // 祖先中如有 X，会在 case 1 就返回，不会进入 enforceLock
-        LockType currLockType = lockContext.getEffectiveLockType(transaction);
+        LockType currLockType = lockContext.getExplicitLockType(transaction);
         if (!LockType.substitutable(currLockType, lockType)) { // true: S/IS/IX/SIX, IS
             if (currLockType == LockType.NL) {
                 // NL -> IS/IX
                 lockContext.acquire(transaction, lockType);
+            } else if (currLockType.equals(LockType.S) && lockType.equals(LockType.IX)) {
+                // S -> IX 需要变成 SIX
+                lockContext.promote(transaction, LockType.SIX);
             } else {
-                // S/IS -> IX
+                // IS -> IX
                 lockContext.promote(transaction, lockType);
             }
         }

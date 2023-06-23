@@ -98,4 +98,8 @@ public class ResourceName {
         }
         return rn.toString();
     }
+
+    public int resourceLevel() {
+        return names.size();
+    }
 }

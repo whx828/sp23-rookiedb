@@ -1016,8 +1016,11 @@ public class Database implements AutoCloseable {
             try {
                 // TODO(proj4_part2)
                 TransactionContext transaction = TransactionContext.getTransaction();
-                List<Lock> locks = lockManager.getLocks(transaction);
+                List<Lock> locks = lockManager.getLocks(this);
+
+                locks.sort(Comparator.comparingInt(o -> o.name.resourceLevel()));
                 Collections.reverse(locks);
+
                 for (Lock lock : locks) {
                     LockContext.fromResourceName(lockManager, lock.name).release(transaction);
                 }

@@ -102,16 +102,18 @@ public class LockContext {
     public void acquire(TransactionContext transaction, LockType lockType)
         throws InvalidLockException, DuplicateLockRequestException {
         // TODO(proj4_part2): implement
+        if (transaction == null) return;
+
         if (readonly) {
             throw new UnsupportedOperationException("readonly");
         }
 
-        if (getEffectiveLockType(transaction).equals(lockType)) {
-            throw new DuplicateLockRequestException("duplicate lock request");
+        if (getExplicitLockType(transaction).equals(lockType)) {
+            throw new DuplicateLockRequestException("lock is already held");
         }
 
         if (parentContext() != null) {
-            LockType parentLock = parentContext().getEffectiveLockType(transaction);
+            LockType parentLock = parentContext().getExplicitLockType(transaction);
             if (!LockType.canBeParentLock(parentLock, lockType)) {
                 throw new InvalidLockException("can't be compatible with parent lock");
             }
@@ -142,6 +144,7 @@ public class LockContext {
     public void release(TransactionContext transaction)
         throws NoLockHeldException, InvalidLockException {
         // TODO(proj4_part2): implement
+        if (transaction == null) return;
         if (readonly) {
             throw new UnsupportedOperationException("readonly");
         }
@@ -196,7 +199,7 @@ public class LockContext {
         }
 
         if (parentContext() != null) {
-            LockType parentLock = parentContext().getEffectiveLockType(transaction);
+            LockType parentLock = parentContext().getExplicitLockType(transaction);
             if (!LockType.canBeParentLock(parentLock, newLockType)) {
                 throw new InvalidLockException("can't be compatible with parent lock");
             }
@@ -204,11 +207,7 @@ public class LockContext {
 
         if (newLockType.equals(LockType.SIX)) {
             if (hasSIXAncestor(transaction)) {
-                throw new InvalidLockException("SIX conflict");
-            }
-
-            if ((lockType.equals(LockType.S) || lockType.equals(LockType.IS))) {
-                throw new InvalidLockException("SIX conflict");
+                throw new InvalidLockException("ancestor already has SIX lock");
             }
 
             if (!LockType.substitutable(newLockType, lockType)){
@@ -342,23 +341,14 @@ public class LockContext {
      */
     private boolean hasSIXAncestor(TransactionContext transaction) {
         // TODO(proj4_part2): implement
-        LockType parentLockType = parent.lockman.getLockType(transaction, name);
-        LockContext p = parent.parent;
-
-        if (parentLockType.equals(LockType.SIX)) {
-            return true;
-        } else {
-            while (p != null) {
-                parentLockType = p.lockman.getLockType(transaction, name);
-
-                if (parentLockType.equals(LockType.SIX)) {
-                    return true;
-                } else {
-                    p = p.parent;
-                }
+        if (this.parent == null) return false;
+        LockContext parent = this.parent;
+        while (parent != null) {
+            if (parent.getEffectiveLockType(transaction).equals(LockType.SIX)) {
+                return true;
             }
+            parent = parent.parent;
         }
-
         return false;
     }
 
