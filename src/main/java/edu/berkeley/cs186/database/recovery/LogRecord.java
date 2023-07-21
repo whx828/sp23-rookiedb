@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 /**
- * An record of the log.
+ * A record of the log.
  */
 public abstract class LogRecord {
     // method called when redo() is called - only used for testing

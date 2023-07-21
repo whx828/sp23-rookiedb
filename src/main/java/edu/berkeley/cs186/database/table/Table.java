@@ -300,7 +300,7 @@ public class Table implements BacktrackingIterable<Record> {
 
     /**
      * Overwrites an existing record with new values and returns the existing
-     * record. stats is updated accordingly. An exception is thrown if rid does
+     * record. stats are updated accordingly. An exception is thrown if rid does
      * not correspond to an existing record in the table.
      */
     public synchronized Record updateRecord(RecordId rid, Record updated) {
@@ -327,7 +327,7 @@ public class Table implements BacktrackingIterable<Record> {
     }
 
     /**
-     * Deletes and returns the record specified by rid from the table and updates
+     * Deletes and returns the record specified by rid of the table and updates
      * stats, freePageNums, and numRecords as necessary. An exception is thrown
      * if rid does not correspond to an existing record in the table.
      */

@@ -99,7 +99,7 @@ public abstract class Transaction implements AutoCloseable {
      * Creates a table. Equivalent to
      * CREATE TABLE tableName (...s)
      * <p>
-     * Indices must be created afterwards with createIndex.
+     * Indices must be created afterward with createIndex.
      *
      * @param s         schema of new table
      * @param tableName name of new table
